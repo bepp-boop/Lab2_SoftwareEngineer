@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.*
 
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +55,7 @@ class MainActivity : ComponentActivity() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Gray)
+                    .background(Color.Black)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Center
 
@@ -63,10 +64,7 @@ class MainActivity : ComponentActivity() {
                 Spacer(Modifier.size(20.dp))
                 switchRow("door", R.drawable.door_open, R.drawable.door_closed)
                 Spacer(Modifier.size(20.dp))
-                switchRow("window", R.drawable.windows_open, R.drawable.windows_closed)
-                switchRow("light", R.drawable.fat_yoshi, R.drawable.yoshi)
-                switchRow("door", R.drawable.fat_yoshi, R.drawable.yoshi)
-                switchRow("window", R.drawable.fat_yoshi, R.drawable.yoshi)
+                switchRow("windows", R.drawable.windows_open, R.drawable.windows_closed)
                 SpeechToText()
 
             }
@@ -94,7 +92,7 @@ class MainActivity : ComponentActivity() {
     fun setStateOfDevice(state: Boolean, id : String) {
         val status = if (id == "light" && state)
             "On"
-        else if (id == "light" && !state)
+        else if (id == "light")
             "Off"
         else if (state)
             "Open"
@@ -111,7 +109,6 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .background(Color.LightGray)
                 .fillMaxWidth()
-                .border(2.dp, Color.Magenta)
                 .padding(10.dp)
         ){
             var Boolean by remember {
@@ -137,7 +134,7 @@ fun textState(type:String,state:Boolean){
 
     val status = if (type == "light" && state)
         "On"
-    else if (type == "light" && !state)
+    else if (type == "light" )
         "Off"
     else if (state)
         "Open"
@@ -187,26 +184,6 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
         ) {
             // on the below line we are creating a simple
             // text for displaying the heading.
-            Text(
-                text = "Speech to Text Example",
-
-                // for this text we are specifying
-                // style on below line
-                style = MaterialTheme.typography.h6,
-
-                // on below line we are specifying the
-                // modifier and padding for our text
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-
-                // on below line we are
-                // specifying the text alignment.
-                textAlign = TextAlign.Center
-            )
-            // on below line we are specifying
-            // the spacer between two views.
-            Spacer(modifier = Modifier.height(30.dp))
 
             // on below line we are creating button for our mic
             Button(
@@ -214,12 +191,14 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
                 // the elevation for our button.
                 elevation = ButtonDefaults.elevation(
                     // we are specifying elevation for different state of buttons.
-                    defaultElevation = 0.dp, pressedElevation = 0.dp, disabledElevation = 0.dp
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    disabledElevation = 0.dp,
                 ),
+                modifier = Modifier.fillMaxWidth(),
 
                 // on below line we are specifying the color for our button
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray),
                 // on below line we are specifying on click listener for our button
                 onClick = { getSpeechInput(context = context) },
             ) {
@@ -228,21 +207,16 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
                 Icon(
                     // in this we are specifying
                     // the icon as mic icon.
-                    imageVector = Icons.Filled.Phone,
-
+                    painter = painterResource(R.drawable.auto_detect_voice_48px),
                     // on below line we are specifying
                     // content description as mic.
                     contentDescription = "Mic",
 
-                    // on below line we are specifying
-                    // tint color for our icon
-                    tint = Color.Green,
-
                     // on below line we are specifying padding,
                     // height and width for our icon
                     modifier = Modifier
-                        .height(100.dp)
-                        .width(100.dp)
+                        .height(60.dp)
+                        .width(60.dp)
                         .padding(5.dp)
                 )
             }
@@ -258,7 +232,7 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
                 // on below line we are specifying
                 // the style for our text.
                 style = MaterialTheme.typography.h6,
-
+                color = Color.White,
                 // on below line we are adding
                 // padding for our text
                 modifier = Modifier
@@ -313,6 +287,8 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
             // on below line we are setting result
             // in our output text method.
             outputTxt = result?.get(0).toString()
+            if (outputTxt == "turn off light")
+                setStateOfDevice(false,"light")
         }
     }
 
