@@ -89,22 +89,7 @@ fun DefaultPreview() {
                 mutableStateOf(true)
             }
             textState("Door",doorState)
-
-            if (doorState) {
-                Image(
-                    painter = painterResource(R.drawable.fat_yoshi),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-
-                )
-            } else
-                Image(
-                    painter = painterResource(R.drawable.yoshi),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-                )
+            imgState(state = doorState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
             Switch(checked = doorState, onCheckedChange = { doorState = !doorState })
         }
 
@@ -113,24 +98,8 @@ fun DefaultPreview() {
             var windowState by remember {
                 mutableStateOf(true)
             }
-            Text(
-                text = if (windowState) "Window : Open " else "Window : Closed"
-            )
-            if (windowState) {
-                Image(
-                    painter = painterResource(R.drawable.fat_yoshi),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-
-                )
-            } else
-                Image(
-                    painter = painterResource(R.drawable.yoshi),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-                )
+            textState("Door",windowState)
+            imgState(state = windowState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
             Switch(checked = windowState, onCheckedChange = { windowState = !windowState })
         }
     }
