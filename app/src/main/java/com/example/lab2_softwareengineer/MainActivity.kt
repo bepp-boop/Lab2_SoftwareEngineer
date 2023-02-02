@@ -7,9 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -32,16 +35,24 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         database = Firebase.database.reference
         addPostEventListener(database)
+        setStateOfDevice(false,"light")
+        setStateOfDevice(false,"door")
+        setStateOfDevice(false,"window")
         setContent {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Gray)
-                    .padding(16.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center
+
             ) {
-                switchRow("light",R.drawable.fat_yoshi,R.drawable.yoshi)
-                switchRow("door",R.drawable.fat_yoshi,R.drawable.yoshi)
-                switchRow("window",R.drawable.fat_yoshi,R.drawable.yoshi)
+                switchRow("light", R.drawable.light_on, R.drawable.light_off)
+                Spacer(Modifier.size(20.dp))
+                switchRow("door", R.drawable.door_open, R.drawable.door_closed)
+                Spacer(Modifier.size(20.dp))
+                switchRow("window", R.drawable.windows_open, R.drawable.windows_closed)
+
             }
 
         }
@@ -53,7 +64,7 @@ class MainActivity : ComponentActivity() {
                 lightState = dataSnapshot.child("light").value as String
                 windowState = dataSnapshot.child("window").value as String
                 doorState = dataSnapshot.child("door").value as String
-                Log.e("tag", "$lightState $windowState $doorState")
+                Log.e("States", "Light: $lightState Windows: $windowState Door: $doorState")
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -64,14 +75,17 @@ class MainActivity : ComponentActivity() {
     }
 
     fun setStateOfDevice(state: Boolean, id : String) {
-        if (state){
-            database.child(id).setValue("on")
-        }
-        else
-            database.child(id).setValue("off")
+        val status = if (id == "light" && state)
+            "On"
+        else if (id == "light" && !state)
+            "Off"
+        else if (state)
+            "Open"
+        else "Closed"
 
-
+        database.child(id).setValue(status)
     }
+
 
 
 
@@ -79,14 +93,21 @@ class MainActivity : ComponentActivity() {
 
     fun switchRow(type: String,id_true:Int,id_fault:Int){
         Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .background(Color.LightGray)
+                .fillMaxWidth()
+                .border(2.dp, Color.Magenta)
+                .padding(10.dp)
         ){
             var Boolean by remember {
-                mutableStateOf(true)
+                mutableStateOf(false)
             }
-            textState(type = type, state = Boolean)
             imgState(state = Boolean, id_true =id_true , id_fault = id_fault)
+            Spacer(Modifier.weight(1f))
+            textState(type = type, state = Boolean)
+            Spacer(Modifier.weight(1f))
             Switch(checked = Boolean,
                 onCheckedChange = {
                     Boolean = !Boolean
@@ -101,11 +122,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun textState(type:String,state:Boolean){
-    if (state) {
-        Text(text = "$type : On")
-    }
-    else
-        Text(text = "$type : Off")
+
+    val status = if (type == "light" && state)
+        "On"
+    else if (type == "light" && !state)
+        "Off"
+    else if (state)
+        "Open"
+    else "Closed"
+
+
+    Text(text = "$type: $status")
 }
 @Composable
 fun imgState(state:Boolean,id_true:Int,id_fault:Int){
@@ -127,43 +154,3 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Gray)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .background(Color.LightGray)
-        ) {
-            var lampState by remember {
-                mutableStateOf(true)
-            }
-            textState("Lamp",lampState)
-            imgState(state = lampState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = lampState, onCheckedChange = { lampState = !lampState })
-        }
-        Row() {
-            var doorState by remember {
-                mutableStateOf(true)
-            }
-            textState("Door",doorState)
-            imgState(state = doorState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = doorState, onCheckedChange = { doorState = !doorState })
-        }
-
-
-        Row() {
-            var windowState by remember {
-                mutableStateOf(true)
-            }
-            textState("Door",windowState)
-            imgState(state = windowState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = windowState, onCheckedChange = { windowState = !windowState })
-        }
-    }
-}
