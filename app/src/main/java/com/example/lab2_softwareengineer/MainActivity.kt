@@ -1,43 +1,137 @@
 package com.example.lab2_softwareengineer
 
 import android.os.Bundle
+import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.lab2_softwareengineer.ui.theme.Lab2_SoftwareEngineerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Lab2_SoftwareEngineerTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    Greeting("Android")
-                }
+
             }
         }
     }
+
+@Composable
+
+fun Greeting(name: String) {
+    Text(text = "Hello $name!")
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun GoodBye(name: String){
+    Text(text=" Good bye $name!")
+}
+
+@Composable
+fun textState(type:String,state:Boolean){
+    if (state) {
+        Text(text = "$type : On")
+    }
+    else
+        Text(text = "$type : Off")
+}
+@Composable
+fun imgState(state:Boolean,id_true:Int,id_fault:Int){
+    if(state){
+        Image(
+            painter = painterResource(id_true),
+            contentDescription = null,
+            modifier = Modifier
+                .size(32.dp)
+        )
+    }
+    else{
+        Image(
+            painter = painterResource(id_fault),
+            contentDescription = null,
+            modifier = Modifier
+                .size(32.dp)
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    Lab2_SoftwareEngineerTheme {
-        Greeting("Android")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Gray)
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .background(Color.LightGray)
+        ) {
+            var lampState by remember {
+                mutableStateOf(true)
+            }
+            textState("Lamp",lampState)
+            imgState(state = lampState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
+            Switch(checked = lampState, onCheckedChange = { lampState = !lampState })
+        }
+        Row() {
+            var doorState by remember {
+                mutableStateOf(true)
+            }
+            textState("Door",doorState)
+
+            if (doorState) {
+                Image(
+                    painter = painterResource(R.drawable.fat_yoshi),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+
+                )
+            } else
+                Image(
+                    painter = painterResource(R.drawable.yoshi),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                )
+            Switch(checked = doorState, onCheckedChange = { doorState = !doorState })
+        }
+
+
+        Row() {
+            var windowState by remember {
+                mutableStateOf(true)
+            }
+            Text(
+                text = if (windowState) "Window : Open " else "Window : Closed"
+            )
+            if (windowState) {
+                Image(
+                    painter = painterResource(R.drawable.fat_yoshi),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+
+                )
+            } else
+                Image(
+                    painter = painterResource(R.drawable.yoshi),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                )
+            Switch(checked = windowState, onCheckedChange = { windowState = !windowState })
+        }
     }
 }
