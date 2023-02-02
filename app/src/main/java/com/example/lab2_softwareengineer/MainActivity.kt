@@ -20,21 +20,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-
+            DefaultPreview()
             }
         }
     }
-
-@Composable
-
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Composable
-fun GoodBye(name: String){
-    Text(text=" Good bye $name!")
-}
 
 @Composable
 fun textState(type:String,state:Boolean){
@@ -64,6 +53,21 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
     }
 }
 
+@Composable
+fun switchRow(type: String,id_true:Int,id_fault:Int){
+    Row(
+        modifier = Modifier
+        .background(Color.LightGray)
+    ){
+        var Boolean by remember {
+            mutableStateOf(true)
+        }
+        textState(type = type, state = Boolean)
+        imgState(state = Boolean, id_true =id_true , id_fault = id_fault)
+        Switch(checked = Boolean, onCheckedChange = {Boolean = !Boolean})
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
@@ -73,34 +77,8 @@ fun DefaultPreview() {
             .background(Color.Gray)
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .background(Color.LightGray)
-        ) {
-            var lampState by remember {
-                mutableStateOf(true)
-            }
-            textState("Lamp",lampState)
-            imgState(state = lampState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = lampState, onCheckedChange = { lampState = !lampState })
-        }
-        Row() {
-            var doorState by remember {
-                mutableStateOf(true)
-            }
-            textState("Door",doorState)
-            imgState(state = doorState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = doorState, onCheckedChange = { doorState = !doorState })
-        }
-
-
-        Row() {
-            var windowState by remember {
-                mutableStateOf(true)
-            }
-            textState("Door",windowState)
-            imgState(state = windowState, id_true = R.drawable.fat_yoshi, id_fault = R.drawable.yoshi)
-            Switch(checked = windowState, onCheckedChange = { windowState = !windowState })
-        }
+        switchRow("Lamp",R.drawable.fat_yoshi,R.drawable.yoshi)
+        switchRow("Door",R.drawable.fat_yoshi,R.drawable.yoshi)
+        switchRow("Windows",R.drawable.fat_yoshi,R.drawable.yoshi)
     }
 }
