@@ -40,17 +40,20 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     var outputTxt by mutableStateOf("Click button for Speech text ")
+
+    var lightState by mutableStateOf(false)
+    var windowState by mutableStateOf(false)
+    var doorState by mutableStateOf(false)
+
     private lateinit var database: DatabaseReference
-    private lateinit var lightState: String
-    private lateinit var windowState: String
-    private lateinit var doorState: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = Firebase.database.reference
-        addPostEventListener(database)
-        setStateOfDevice(false,"light")
-        setStateOfDevice(false,"door")
-        setStateOfDevice(false,"window")
+        // the states are grabbed db
+        initStatesFromDB()
+        // listen to changes in db
+        addStateListener()
         setContent {
             Column(
                 modifier = Modifier
@@ -60,11 +63,16 @@ class MainActivity : ComponentActivity() {
                 verticalArrangement = Arrangement.Center
 
             ) {
-                switchRow("light", R.drawable.light_on, R.drawable.light_off)
+                switchRow("light", R.drawable.light_on, R.drawable.light_off, lightState)
                 Spacer(Modifier.size(20.dp))
-                switchRow("door", R.drawable.door_open, R.drawable.door_closed)
+                switchRow("door", R.drawable.door_open, R.drawable.door_closed, doorState)
                 Spacer(Modifier.size(20.dp))
-                switchRow("windows", R.drawable.windows_open, R.drawable.windows_closed)
+                switchRow(
+                    "window",
+                    R.drawable.windows_open,
+                    R.drawable.windows_closed,
+                    windowState
+                )
                 SpeechToText()
 
             }
@@ -73,12 +81,12 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun addPostEventListener(db: DatabaseReference) {
+    private fun addStateListener() {
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                lightState = dataSnapshot.child("light").value as String
-                windowState = dataSnapshot.child("window").value as String
-                doorState = dataSnapshot.child("door").value as String
+                lightState = dataSnapshot.child("light").value as Boolean
+                windowState = dataSnapshot.child("window").value as Boolean
+                doorState = dataSnapshot.child("door").value as Boolean
                 Log.e("States", "Light: $lightState Windows: $windowState Door: $doorState")
             }
 
@@ -86,23 +94,25 @@ class MainActivity : ComponentActivity() {
                 Log.w("addPostEventListener", "loadPost:onCancelled", databaseError.toException())
             }
         }
-        db.addValueEventListener(postListener)
+        database.addValueEventListener(postListener)
     }
 
-    fun setStateOfDevice(state: Boolean, id : String) {
-        val status = if (id == "light" && state)
-            "On"
-        else if (id == "light")
-            "Off"
-        else if (state)
-            "Open"
-        else "Closed"
-
-        database.child(id).setValue(status)
+    fun setStateOfDevice(state: Boolean, id: String) {
+        database.child(id).setValue(state)
     }
-
+    fun initStatesFromDB(){
+        database.child("light").get().addOnSuccessListener {
+            lightState = it.value as Boolean
+        }
+        database.child("door").get().addOnSuccessListener {
+            doorState = it.value as Boolean
+        }
+        database.child("window").get().addOnSuccessListener {
+            windowState = it.value as Boolean
+        }
+}
     @Composable
-    fun switchRow(type: String, id_true: Int, id_fault: Int) {
+    fun switchRow(type: String, id_true: Int, id_fault: Int, state: Boolean) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
@@ -110,13 +120,14 @@ class MainActivity : ComponentActivity() {
                 .background(Color.LightGray)
                 .fillMaxWidth()
                 .padding(10.dp)
-        ){
+        ) {
             var Boolean by remember {
-                mutableStateOf(false)
+                mutableStateOf(state)
             }
-            imgState(state = Boolean, id_true =id_true , id_fault = id_fault)
+            Boolean = state
+            imgState(state = state, id_true = id_true, id_fault = id_fault)
             Spacer(Modifier.weight(1f))
-            textState(type = type, state = Boolean)
+            textState(type = type, state = state)
             Spacer(Modifier.weight(1f))
             Switch(checked = Boolean,
                 onCheckedChange = {
@@ -127,43 +138,40 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    @Composable
+    fun textState(type: String, state: Boolean) {
+
+        val status = if (type == "light" && state)
+            "On"
+        else if (type == "light")
+            "Off"
+        else if (state)
+            "Open"
+        else "Closed"
 
 
-@Composable
-fun textState(type:String,state:Boolean){
-
-    val status = if (type == "light" && state)
-        "On"
-    else if (type == "light" )
-        "Off"
-    else if (state)
-        "Open"
-    else "Closed"
-
-
-    Text(text = "$type: $status")
-}
-@Composable
-fun imgState(state:Boolean,id_true:Int,id_fault:Int){
-    if(state){
-        Image(
-            painter = painterResource(id_true),
-            contentDescription = null,
-            modifier = Modifier
-                .size(32.dp)
-        )
+        Text(text = "$type: $status")
     }
-    else{
-        Image(
-            painter = painterResource(id_fault),
-            contentDescription = null,
-            modifier = Modifier
-                .size(32.dp)
-        )
-    }
-}
 
-   
+    @Composable
+    fun imgState(state: Boolean, id_true: Int, id_fault: Int) {
+        if (state) {
+            Image(
+                painter = painterResource(id_true),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(32.dp)
+            )
+        } else {
+            Image(
+                painter = painterResource(id_fault),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(32.dp)
+            )
+        }
+    }
+
 
     @Composable
     fun SpeechToText() {
@@ -287,9 +295,27 @@ fun imgState(state:Boolean,id_true:Int,id_fault:Int){
             // on below line we are setting result
             // in our output text method.
             outputTxt = result?.get(0).toString()
-            if (outputTxt == "turn off light")
-                setStateOfDevice(false,"light")
+           setStateFromSpeach(outputTxt.lowercase())
+        }
+
+    }
+
+    fun setStateFromSpeach(command :String){
+        if (command.contains("light") && command.contains("off")) {
+            setStateOfDevice(false, "light")
+        } else if (command.contains("light") && command.contains("on")) {
+            setStateOfDevice(true, "light")
+        } else if (command.contains("door") && command.contains("close")) {
+            setStateOfDevice(false, "door")
+        } else if (command.contains("door") && command.contains("open")) {
+            setStateOfDevice(true, "door")
+        } else if (command.contains("window") && command.contains("close")) {
+            setStateOfDevice(false, "window")
+        } else if (command.contains("window") && command.contains("open")) {
+            setStateOfDevice(true, "window")
         }
     }
+
+
 
 }
