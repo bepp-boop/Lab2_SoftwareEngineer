@@ -8,18 +8,12 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import android.widget.Toast
-import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,9 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.lab2_softwareengineer.ui.theme.Lab2_SoftwareEngineerTheme
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -295,12 +287,12 @@ class MainActivity : ComponentActivity() {
             // on below line we are setting result
             // in our output text method.
             outputTxt = result?.get(0).toString()
-           setStateFromSpeach(outputTxt.lowercase())
+           setStateFromSpeech(outputTxt.lowercase())
         }
 
     }
 
-    fun setStateFromSpeach(command :String){
+    fun setStateFromSpeech(command :String){
         if (command.contains("light") && command.contains("off")) {
             setStateOfDevice(false, "light")
         } else if (command.contains("light") && command.contains("on")) {
