@@ -13,9 +13,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,24 +40,39 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     var outputTxt by mutableStateOf("Click button for Speech text ")
+
+    var lightState by mutableStateOf(false)
+    var windowState by mutableStateOf(false)
+    var doorState by mutableStateOf(false)
+
     private lateinit var database: DatabaseReference
-    private lateinit var lightState: String
-    private lateinit var windowState: String
-    private lateinit var doorState: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = Firebase.database.reference
-        addPostEventListener(database)
+        // the states are grabbed db
+        initStatesFromDB()
+        // listen to changes in db
+        addStateListener()
         setContent {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Gray)
-                    .padding(16.dp)
+                    .background(Color.Black)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center
+
             ) {
-                switchRow("light", R.drawable.fat_yoshi, R.drawable.yoshi)
-                switchRow("door", R.drawable.fat_yoshi, R.drawable.yoshi)
-                switchRow("window", R.drawable.fat_yoshi, R.drawable.yoshi)
+                switchRow("light", R.drawable.light_on, R.drawable.light_off, lightState)
+                Spacer(Modifier.size(20.dp))
+                switchRow("door", R.drawable.door_open, R.drawable.door_closed, doorState)
+                Spacer(Modifier.size(20.dp))
+                switchRow(
+                    "window",
+                    R.drawable.windows_open,
+                    R.drawable.windows_closed,
+                    windowState
+                )
                 SpeechToText()
 
             }
@@ -63,42 +81,54 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    private fun addPostEventListener(db: DatabaseReference) {
+    private fun addStateListener() {
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                lightState = dataSnapshot.child("light").value as String
-                windowState = dataSnapshot.child("window").value as String
-                doorState = dataSnapshot.child("door").value as String
-                Log.e("tag", "$lightState $windowState $doorState")
+                lightState = dataSnapshot.child("light").value as Boolean
+                windowState = dataSnapshot.child("window").value as Boolean
+                doorState = dataSnapshot.child("door").value as Boolean
+                Log.e("States", "Light: $lightState Windows: $windowState Door: $doorState")
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
                 Log.w("addPostEventListener", "loadPost:onCancelled", databaseError.toException())
             }
         }
-        db.addValueEventListener(postListener)
+        database.addValueEventListener(postListener)
     }
 
     fun setStateOfDevice(state: Boolean, id: String) {
-        if (state) {
-            database.child(id).setValue("on")
-        } else
-            database.child(id).setValue("off")
-
-
+        database.child(id).setValue(state)
     }
-
+    fun initStatesFromDB(){
+        database.child("light").get().addOnSuccessListener {
+            lightState = it.value as Boolean
+        }
+        database.child("door").get().addOnSuccessListener {
+            doorState = it.value as Boolean
+        }
+        database.child("window").get().addOnSuccessListener {
+            windowState = it.value as Boolean
+        }
+}
     @Composable
-    fun switchRow(type: String, id_true: Int, id_fault: Int) {
+    fun switchRow(type: String, id_true: Int, id_fault: Int, state: Boolean) {
         Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .background(Color.LightGray)
+                .fillMaxWidth()
+                .padding(10.dp)
         ) {
             var Boolean by remember {
-                mutableStateOf(true)
+                mutableStateOf(state)
             }
-            textState(type = type, state = Boolean)
-            imgState(state = Boolean, id_true = id_true, id_fault = id_fault)
+            Boolean = state
+            imgState(state = state, id_true = id_true, id_fault = id_fault)
+            Spacer(Modifier.weight(1f))
+            textState(type = type, state = state)
+            Spacer(Modifier.weight(1f))
             Switch(checked = Boolean,
                 onCheckedChange = {
                     Boolean = !Boolean
@@ -110,10 +140,17 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun textState(type: String, state: Boolean) {
-        if (state) {
-            Text(text = "$type : On")
-        } else
-            Text(text = "$type : Off")
+
+        val status = if (type == "light" && state)
+            "On"
+        else if (type == "light")
+            "Off"
+        else if (state)
+            "Open"
+        else "Closed"
+
+
+        Text(text = "$type: $status")
     }
 
     @Composable
@@ -135,6 +172,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     @Composable
     fun SpeechToText() {
         // on below line we are creating
@@ -154,26 +192,6 @@ class MainActivity : ComponentActivity() {
         ) {
             // on the below line we are creating a simple
             // text for displaying the heading.
-            Text(
-                text = "Speech to Text Example",
-
-                // for this text we are specifying
-                // style on below line
-                style = MaterialTheme.typography.h6,
-
-                // on below line we are specifying the
-                // modifier and padding for our text
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
-
-                // on below line we are
-                // specifying the text alignment.
-                textAlign = TextAlign.Center
-            )
-            // on below line we are specifying
-            // the spacer between two views.
-            Spacer(modifier = Modifier.height(30.dp))
 
             // on below line we are creating button for our mic
             Button(
@@ -181,12 +199,14 @@ class MainActivity : ComponentActivity() {
                 // the elevation for our button.
                 elevation = ButtonDefaults.elevation(
                     // we are specifying elevation for different state of buttons.
-                    defaultElevation = 0.dp, pressedElevation = 0.dp, disabledElevation = 0.dp
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    disabledElevation = 0.dp,
                 ),
+                modifier = Modifier.fillMaxWidth(),
 
                 // on below line we are specifying the color for our button
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray),
                 // on below line we are specifying on click listener for our button
                 onClick = { getSpeechInput(context = context) },
             ) {
@@ -195,21 +215,16 @@ class MainActivity : ComponentActivity() {
                 Icon(
                     // in this we are specifying
                     // the icon as mic icon.
-                    imageVector = Icons.Filled.Phone,
-
+                    painter = painterResource(R.drawable.auto_detect_voice_48px),
                     // on below line we are specifying
                     // content description as mic.
                     contentDescription = "Mic",
 
-                    // on below line we are specifying
-                    // tint color for our icon
-                    tint = Color.Green,
-
                     // on below line we are specifying padding,
                     // height and width for our icon
                     modifier = Modifier
-                        .height(100.dp)
-                        .width(100.dp)
+                        .height(60.dp)
+                        .width(60.dp)
                         .padding(5.dp)
                 )
             }
@@ -225,7 +240,7 @@ class MainActivity : ComponentActivity() {
                 // on below line we are specifying
                 // the style for our text.
                 style = MaterialTheme.typography.h6,
-
+                color = Color.White,
                 // on below line we are adding
                 // padding for our text
                 modifier = Modifier
@@ -280,7 +295,27 @@ class MainActivity : ComponentActivity() {
             // on below line we are setting result
             // in our output text method.
             outputTxt = result?.get(0).toString()
+           setStateFromSpeach(outputTxt.lowercase())
+        }
+
+    }
+
+    fun setStateFromSpeach(command :String){
+        if (command.contains("light") && command.contains("off")) {
+            setStateOfDevice(false, "light")
+        } else if (command.contains("light") && command.contains("on")) {
+            setStateOfDevice(true, "light")
+        } else if (command.contains("door") && command.contains("close")) {
+            setStateOfDevice(false, "door")
+        } else if (command.contains("door") && command.contains("open")) {
+            setStateOfDevice(true, "door")
+        } else if (command.contains("window") && command.contains("close")) {
+            setStateOfDevice(false, "window")
+        } else if (command.contains("window") && command.contains("open")) {
+            setStateOfDevice(true, "window")
         }
     }
+
+
 
 }
